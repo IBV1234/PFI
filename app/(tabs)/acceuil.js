@@ -53,7 +53,7 @@ export default function Acceuil() {
         "ChocolateSC.jpg": require("../../assets/images/ChocolateSC.jpg")
     }
 
-    const newData = Data.map((_data) => {
+    const newData = Data.map((_data) => { //ok
         return {
             ..._data,
             lien: imgages[_data.lien],
