@@ -1,75 +1,129 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React,{useEffect} from 'react';
+import { StyleSheet, Text, View, Image, Dimensions, Pressable } from 'react-native';
+import { Link } from "expo-router";
+import * as SQLite from "expo-sqlite";
+import { useLoadFont } from '../../hooks/fontLoaded';
+import * as Localization from 'expo-localization';
+import {I18n} from 'i18n-js';
+import { translations } from '../../constants/DataLangages';
+import { LangageToExport } from './langage';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const { height, width } = Dimensions.get('window'); //obtenir les dimensions de l'écran.
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+
+ export const db = SQLite.openDatabaseSync('PFI.db');
+
+    const createTableUsers=() => db.withTransactionSync(()=> db.runSync("CREATE TABLE IF NOT EXISTS " +
+    "User (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT, password TEXT,admin INTEGER);" ))
+
+
+    const createTableFoods=() => db.withTransactionSync(()=> db.runSync("CREATE TABLE IF NOT EXISTS " +
+        "Foods (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT, lien TEXT,prix INTEGER,disponible INTEGER,description TEXT);" ))
+
+        const createPanierUser=() => db.withTransactionSync(()=> db.runSync("CREATE TABLE IF NOT EXISTS " +
+            "Panier (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT, lien TEXT,prix INTEGER,description TEXT);" ))
+
+        const DELETEtABLE = () => db.withTransactionSync(() => db.runSync("DROP TABLE IF EXISTS User"));    
+
+
+     function createTables(){
+        createTableUsers();
+        createTableFoods();
+        createPanierUser();
+        console.log("Les tables on été créés");
+    }
+
+    
+const i18n = new I18n(translations);
+
+export default function Acceuil() {
+    i18n.locale = LangageToExport.langage ?? Localization.getLocales()[0].languageTag;
+
+    const fontsLoaded =  useLoadFont();
+    useEffect(() => {
+
+        createTables();
+     //DELETEtABLE();
+    },[]);
+
+
+    if (!fontsLoaded) {
+        return (
+            <Text style={{alignSelf:'center'}}>{i18n.t("loading")}...</Text>
+          );
+    }
+
+    return (
+        <View style={styles.containerAcceuil}>
+
+            <View >
+                <Image style={styles.image} source={require('../../assets/images/food-acceuil.jpg')} />
+            </View>
+
+            <View style={styles.containerAcceuil2}>
+
+                <View style={{ marginTop: 40, alignItems: 'center' }}>
+
+                    <Text style={{ fontSize: 23, fontWeight: 'bold', fontFamily: 'Inknut Antiqua', color: 'black' }}>{i18n.t("indexTitle")}</Text>
+
+                   <Link href={"/connexion"} asChild style={[styles.boutton ,{backgroundColor:'#EE6136',marginTop:20}]}>
+
+                         <Pressable  onPress={() => { console.log('connexion') }}>
+                                 <Text style={styles.text}>{i18n.t("connection")}</Text>
+                        </Pressable>
+
+                   </Link>
+
+                      <Link href={"/inscription"} asChild style={[styles.boutton ,{backgroundColor:'#EDA36E',marginTop:25}]} >
+
+                            <Pressable  onPress={() => { console.log('Inscription') }}>
+                                <Text style={styles.text}>{i18n.t("inscription")}</Text>
+                         </Pressable>
+
+                      </Link>
+                      
+                </View>
+            </View>
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+    containerAcceuil: {
+        flex: 1,
+        flexDirection: 'column',
+        backgroundColor: '#fff',
+    },
+    image: {
+        borderBlockColor: 'black',
+        borderWidth: 4,
+        height: height * 0.55, // 50% de la hauteur de l'écran
+        width: width,
+    },
+    containerAcceuil2: {
+        alignItems: 'center',
+        backgroundColor: '#F3F0E8',
+        height: height,
+        width: width
+      },
+    boutton:{
+        marginTop: 20, 
+         borderRadius: 20,  
+         width: 230, 
+         height: 50,
+         alignItems: 'center' ,
+         shadowColor: 'black',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.4,
+        shadowRadius: 2,
+         
+    },
+    text:{
+      alignContent:'center',
+      fontSize: 15,
+      fontWeight: 'bold',
+      fontFamily: 'Inknut Antiqua',
+    }
 });
+
+
